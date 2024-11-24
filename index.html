@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sube tu INE</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::after,
+      *::before {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      h1,
+      h3 {
+        text-align: center;
+        margin: 50px;
+      }
+
+      .drop-zone {
+        border: 2px dashed #0d6efd;
+        border-radius: 5px;
+        padding: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-flow: wrap column;
+        color: #6c757d;
+        cursor: pointer;
+        height: 400px;
+      }
+
+      .drop-zone.drag-over {
+        background-color: #e9ecef;
+        border-color: #0d6efd;
+      }
+
+      .hidden {
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.5s ease;
+        position: absolute;
+      }
+
+      .loader-container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-flow: wrap column;
+        position: absolute;
+        top: 0;
+        z-index: 2;
+        backdrop-filter: blur(5px);
+      }
+
+      button {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loader-container hidden" id="loader-ine">
+      <l-ring
+        size="40"
+        stroke="5"
+        bg-opacity="0"
+        speed="2"
+        color="blue"
+      ></l-ring>
+      <h3>Leyendo INE</h3>
+    </div>
+    <div class="container mt-5">
+      <h1>Registro</h1>
+      <!-- Formulario para subir la imagen -->
+      <div id="uploadZone" class="drop-zone">
+        <h5>Sube tu INE</h5>
+        <p>Arrastra o selecciona un archivo</p>
+        <input
+          type="file"
+          id="fileInput"
+          name="image"
+          class="form-control d-none"
+          required
+        />
+      </div>
+
+      <!-- Formulario que aparece tras subir el archivo -->
+      <div id="formSection" class="hidden">
+        <h5 class="text-center mb-4">Información Personal</h5>
+        <form>
+          <div class="mb-3">
+            <label for="apellidoPaterno" class="form-label"
+              >Apellido Paterno</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="apellidoPaterno"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="apellidoMaterno" class="form-label"
+              >Apellido Materno</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="apellidoMaterno"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="nombres" class="form-label">Nombre(s)</label>
+            <input type="text" class="form-control" id="nombres" required />
+          </div>
+          <div class="mb-3">
+            <label for="domicilio" class="form-label">Domicilio completo</label>
+            <input type="text" class="form-control" id="domicilio" required />
+          </div>
+          <div class="mb-3">
+            <label for="curp" class="form-label">CURP</label>
+            <input type="text" class="form-control" id="curp" required />
+          </div>
+          <button class="btn btn-primary" id="btn-reload-ine">
+            Volver a subir INE
+          </button>
+          <button type="submit" class="btn btn-primary" id="btn-send">
+            Enviar
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/ring.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      const uploadZone = document.getElementById("uploadZone");
+      const fileInput = document.getElementById("fileInput");
+      const formSection = document.getElementById("formSection");
+      const loaderINE = document.getElementById("loader-ine");
+      const btnReloadINE = document.getElementById("btn-reload-ine");
+      const btnSend = document.getElementById("btn-send");
+
+      // Manejador para el arrastre de archivos
+      uploadZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadZone.classList.add("drag-over");
+      });
+
+      uploadZone.addEventListener("dragleave", () => {
+        uploadZone.classList.remove("drag-over");
+      });
+
+      uploadZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadZone.classList.remove("drag-over");
+        // Simular carga de archivo
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          mostrarFormulario(file);
+        }
+      });
+
+      // Manejador para seleccionar un archivo
+      uploadZone.addEventListener("click", () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+          mostrarFormulario(fileInput.files[0]);
+        }
+      });
+
+      // Función para mostrar el formulario y ocultar la zona de carga
+      async function mostrarFormulario(file) {
+        try {
+          loaderINE.classList.remove("hidden");
+          const formData = new FormData();
+          formData.append("image", file);
+          let response = await fetch("./back.php", {
+            method: "POST",
+            body: formData,
+          });
+          let json = await response.json();
+          loaderINE.classList.add("hidden");
+          if (json.status === "error") {
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: json.error,
+            });
+            return;
+          }
+
+          console.log(json);
+          document.getElementById("apellidoPaterno").value =
+            json.name.paternal_surname;
+          document.getElementById("apellidoMaterno").value =
+            json.name.maternal_surname;
+          document.getElementById("nombres").value = json.name.names;
+          document.getElementById("domicilio").value = json.address;
+          document.getElementById("curp").value = json.curp;
+          uploadZone.classList.add("hidden");
+          formSection.classList.remove("hidden");
+        } catch (err) {
+          console.error(err);
+          loaderINE.classList.add("hidden");
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "No se pudo cargar el archivo, intenta seleccionarlo",
+          });
+        }
+      }
+
+      btnReloadINE.addEventListener("click", () => {
+        uploadZone.classList.remove("hidden");
+        formSection.classList.add("hidden");
+      });
+
+      btnSend.addEventListener("click", (e) => {
+        e.preventDefault();
+        Swal.fire({
+          icon: "success",
+          title: "Datos registrados correctamente",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      });
+    </script>
+  </body>
+</html>
