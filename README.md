@@ -1,4 +1,7 @@
 # Lector de credenciales del INE México
+
+![2024-11-23 18-29-32](https://github.com/user-attachments/assets/35cfda8e-6e7a-4473-8e64-85736fe83df8)
+
 Para poder utilizar esto, se necesita descargar la extensión Tesseract para PHP
 
 En Fedora Linux se instala de la siguiente forma
