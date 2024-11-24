@@ -198,6 +198,7 @@
             body: formData,
           });
           let json = await response.json();
+          console.log(json);
           loaderINE.classList.add("hidden");
           if (json.status === "error") {
             Swal.fire({

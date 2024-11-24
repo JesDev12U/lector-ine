@@ -21,17 +21,30 @@ try {
         $response['status'] = 'success';
         $response['fulltext'] = file_get_contents($outputFile . '.txt');
         $patternName = '/(?<=NOMBRE\s)[A-Z\s]+(?=\sDOMICILIO)/i'; //regex para el nombre
-        $patternAddress = '/(?<=DOMICILIO\s)[A-Z\s0-9\.,]+(?=\sCLAVE)/i'; //regex para el domicilio
+        $patternAddress = '/(?<=DOMICILIO\s)[A-Z\s0-9\.|\-_\)\(\*\&\^\%\$\#\@\!\/,]+(?=\sCLAVE)/i'; //regex para el domicilio
         $patternCURP = '/\b([A-Z][AEIOUX][A-Z]{2}\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[HM](?:AS|B[CS]|C[CLMSH]|D[FG]|G[TR]|HG|JC|M[CNS]|N[ETL]|OC|PL|Q[TR]|S[PLR]|T[CSL]|VZ|YN|ZS)[B-DF-HJ-NP-TV-Z]{3}[A-Z\d])(\d)\b/';
 
         //Validamos el nombre
         if (preg_match($patternName, $response['fulltext'], $matches)) {
           $splitName = [];
           $name = trim($matches[0], "\n");
+          $cont = 0;
           $arrayName = explode("\n", $name);
-          $splitName['paternal_surname'] = $arrayName[0];
-          $splitName['maternal_surname'] = $arrayName[1];
-          $splitName['names'] = $arrayName[2];
+          for ($i = 0; $i < count($arrayName); $i++) {
+            if ($arrayName[$i] === " " || $arrayName[$i] === null || $arrayName[$i] === "") continue;
+            switch ($cont) {
+              case 0: {
+                  $splitName['paternal_surname'] = $arrayName[$i];
+                }
+              case 1: {
+                  $splitName['maternal_surname'] = $arrayName[$i];
+                }
+              case 2: {
+                  $splitName['names'] = $arrayName[$i];
+                }
+            }
+            $cont++;
+          }
           $response['name'] = $splitName;
         } else {
           $response['status'] = 'error';
